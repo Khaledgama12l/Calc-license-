@@ -1,0 +1,507 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10121a">
+  <title>مولد مفاتيح التفعيل</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      background: #10121a;
+      color: #f1f3f8;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 30px auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    h1 {
+      font-size: 25px;
+      margin-bottom: 8px;
+    }
+
+    header p, small {
+      color: #9299aa;
+    }
+
+    .panel {
+      background: #191d29;
+      border: 1px solid #2b3141;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      margin-top: 0;
+      font-size: 17px;
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 8px;
+      font-size: 14px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 13px;
+      border-radius: 9px;
+      border: 1px solid #343b4e;
+      background: #10131d;
+      color: white;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #5284ff;
+    }
+
+    .upload-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .upload-btn {
+      background: #29344b;
+      color: white;
+      text-align: center;
+      padding: 13px 8px;
+      border-radius: 9px;
+      cursor: pointer;
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .upload-btn input {
+      display: none;
+    }
+
+    #preview {
+      display: none;
+      width: 100%;
+      max-height: 250px;
+      object-fit: contain;
+      margin-top: 15px;
+      border-radius: 9px;
+      background: #10131d;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 9px;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      background: #29344b;
+    }
+
+    .primary {
+      background: #4169e1;
+      margin-top: 0;
+    }
+
+    .copy-btn {
+      background: #187c61;
+    }
+
+    #status {
+      color: #aab8d4;
+      font-size: 13px;
+      min-height: 18px;
+      text-align: center;
+    }
+
+    .result {
+      display: none;
+      margin-top: 18px;
+      padding: 20px;
+      background: #191d29;
+      border: 1px solid #2b3141;
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .key {
+      direction: ltr;
+      font-size: 25px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #65a3ff;
+      background: #10131d;
+      padding: 18px 8px;
+      border-radius: 9px;
+      overflow-wrap: anywhere;
+      margin: 15px 0;
+    }
+
+    .error {
+      color: #ff7777 !important;
+    }
+
+    .success {
+      color: #5bd6a3 !important;
+    }
+
+    @media (max-width: 420px) {
+      body {
+        padding: 12px;
+      }
+
+      .key {
+        font-size: 20px;
+      }
+
+      .upload-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="container">
+
+  <header>
+    <h1>مولّد مفاتيح التفعيل</h1>
+    <p>إصدار مفاتيح الترخيص للأجهزة</p>
+  </header>
+
+  <section class="panel">
+    <h3>Hardware ID</h3>
+
+    <div class="upload-buttons">
+
+      <label class="upload-btn">
+        اختيار صورة من الجهاز
+        <input type="file" id="imageInput" accept="image/*">
+      </label>
+
+      <label class="upload-btn">
+        التصوير بالكاميرا
+        <input type="file" id="cameraInput"
+               accept="image/*" capture="environment">
+      </label>
+
+    </div>
+
+    <img id="preview" alt="معاينة الصورة">
+
+    <button id="readImage" class="secondary">
+      استخراج Hardware ID من الصورة
+    </button>
+
+    <p id="status"></p>
+
+    <label for="hardwareId">معرّف الجهاز</label>
+
+    <input
+      type="text"
+      id="hardwareId"
+      placeholder="AB12-CD34-EF56-7890-1234-5678"
+      dir="ltr"
+      autocomplete="off"
+    >
+  </section>
+
+  <section class="panel">
+    <h3>نوع الترخيص</h3>
+
+    <select id="licenseType">
+      <option value="D">يومي - Daily</option>
+      <option value="W">أسبوعي - Weekly</option>
+      <option value="M">شهري - Monthly</option>
+      <option value="P">دائم - Permanent</option>
+    </select>
+  </section>
+
+  <section class="panel">
+    <h3>تاريخ إصدار المفتاح</h3>
+    <input type="date" id="licenseDate">
+    <small>يتم اختيار تاريخ اليوم تلقائياً.</small>
+  </section>
+
+  <button id="generate" class="primary">
+    حساب مفتاح التفعيل
+  </button>
+
+  <section class="result" id="resultBox">
+    <h3>مفتاح التفعيل</h3>
+
+    <div id="resultKey" class="key">----------</div>
+
+    <button id="copyKey" class="copy-btn">
+      نسخ المفتاح
+    </button>
+  </section>
+
+</main>
+
+<script>
+  const imageInput = document.getElementById("imageInput");
+  const cameraInput = document.getElementById("cameraInput");
+  const preview = document.getElementById("preview");
+  const hardwareId = document.getElementById("hardwareId");
+  const statusText = document.getElementById("status");
+  const readImageBtn = document.getElementById("readImage");
+  const generateBtn = document.getElementById("generate");
+  const resultBox = document.getElementById("resultBox");
+  const resultKey = document.getElementById("resultKey");
+  const licenseType = document.getElementById("licenseType");
+  const licenseDate = document.getElementById("licenseDate");
+
+  let selectedImage = null;
+  let generatedKey = "";
+
+  function getToday() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  licenseDate.value = getToday();
+
+  function previewImage(file) {
+    if (!file) return;
+
+    selectedImage = file;
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+    statusText.textContent = "تم اختيار الصورة.";
+    statusText.className = "";
+  }
+
+  imageInput.addEventListener("change", () => {
+    previewImage(imageInput.files[0]);
+  });
+
+  cameraInput.addEventListener("change", () => {
+    previewImage(cameraInput.files[0]);
+  });
+
+  function extractHardwareId(text) {
+    const cleanText = text.toUpperCase();
+
+    // البحث عن 24 خانة Hex حتى لو بينها شرطات أو مسافات
+    const candidates = cleanText.match(/[0-9A-F][0-9A-F\s:-]{22,40}[0-9A-F]/g) || [];
+
+    for (const candidate of candidates) {
+      const hex = candidate.replace(/[^0-9A-F]/g, "");
+
+      if (hex.length === 24) {
+        return hex.match(/.{4}/g).join("-");
+      }
+    }
+
+    return "";
+  }
+
+  readImageBtn.addEventListener("click", async () => {
+    if (!selectedImage) {
+      statusText.textContent = "اختار صورة أولاً.";
+      statusText.className = "error";
+      return;
+    }
+
+    readImageBtn.disabled = true;
+    statusText.textContent = "جاري قراءة الصورة...";
+
+    try {
+      const result = await Tesseract.recognize(
+        selectedImage,
+        "eng",
+        {
+          logger: info => {
+            if (info.status === "recognizing text") {
+              statusText.textContent =
+                `جاري استخراج النص: ${Math.round(info.progress * 100)}%`;
+            }
+          }
+        }
+      );
+
+      const extracted = extractHardwareId(result.data.text);
+
+      if (extracted) {
+        hardwareId.value = extracted;
+        statusText.textContent = "تم استخراج Hardware ID بنجاح.";
+        statusText.className = "success";
+      } else {
+        statusText.textContent =
+          "لم يتم العثور على ID صالح. أدخله يدوياً.";
+        statusText.className = "error";
+      }
+
+    } catch (error) {
+      statusText.textContent = "حدث خطأ أثناء قراءة الصورة.";
+      statusText.className = "error";
+    }
+
+    readImageBtn.disabled = false;
+  });
+
+  function hexValue(char) {
+    return parseInt(char, 16);
+  }
+
+  function getDateCode(dateString) {
+    const date = new Date(dateString + "T12:00:00");
+
+    if (isNaN(date.getTime())) {
+      throw new Error("التاريخ غير صحيح.");
+    }
+
+    const year = String(date.getFullYear()).slice(-2);
+
+    const start = new Date(date.getFullYear(), 0, 1);
+    const dayNumber = Math.floor(
+      (date - start) / 86400000
+    ) + 1;
+
+    return year + String(dayNumber).padStart(3, "0");
+  }
+
+  function generateLicense(id, type, dateString) {
+    const hex = id.replace(/[^0-9A-F]/gi, "").toUpperCase();
+
+    if (hex.length !== 24) {
+      throw new Error("Hardware ID يجب أن يحتوي على 24 خانة Hex.");
+    }
+
+    const groups = hex.match(/.{4}/g);
+
+    let deviceCode = "";
+
+    switch (type) {
+      case "D":
+        deviceCode =
+          groups[0][0] +
+          groups[2][0] +
+          groups[4][0];
+        break;
+
+      case "W":
+        deviceCode =
+          groups[1][1] +
+          groups[3][1] +
+          groups[5][1];
+        break;
+
+      case "M":
+        deviceCode =
+          groups[0][2] +
+          groups[3][2] +
+          groups[5][2];
+        break;
+
+      case "P":
+        deviceCode =
+          groups[1][3] +
+          groups[2][3] +
+          groups[4][3];
+        break;
+
+      default:
+        throw new Error("نوع الترخيص غير صحيح.");
+    }
+
+    const dateCode = getDateCode(dateString);
+
+    const typeValues = {
+      D: 1,
+      W: 3,
+      M: 5,
+      P: 7
+    };
+
+    let sum = 0;
+
+    for (const digit of dateCode) {
+      sum += Number(digit);
+    }
+
+    for (const char of deviceCode) {
+      sum += hexValue(char);
+    }
+
+    sum += typeValues[type];
+
+    const checksum = (sum % 16).toString(16).toUpperCase();
+
+    return type + dateCode + deviceCode + checksum;
+  }
+
+  generateBtn.addEventListener("click", () => {
+    try {
+      generatedKey = generateLicense(
+        hardwareId.value,
+        licenseType.value,
+        licenseDate.value
+      );
+
+      resultKey.textContent = generatedKey;
+      resultBox.style.display = "block";
+
+      statusText.textContent = "تم إنشاء مفتاح التفعيل.";
+      statusText.className = "success";
+
+    } catch (error) {
+      resultBox.style.display = "none";
+      statusText.textContent = error.message;
+      statusText.className = "error";
+    }
+  });
+
+  document.getElementById("copyKey").addEventListener("click", async () => {
+    if (!generatedKey) return;
+
+    try {
+      await navigator.clipboard.writeText(generatedKey);
+      statusText.textContent = "تم نسخ المفتاح.";
+      statusText.className = "success";
+    } catch {
+      statusText.textContent = "تعذر النسخ تلقائياً.";
+      statusText.className = "error";
+    }
+  });
+</script>
+
+</body>
+</html>
